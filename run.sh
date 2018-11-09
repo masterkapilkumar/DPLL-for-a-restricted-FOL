@@ -1,0 +1,1 @@
+ocamlc signature.mli structure.ml testcase.ml && ./a.out
