@@ -94,7 +94,30 @@ struct
 				else let _ = raise (Not_wff(all_invalid_terms, all_invalid_formulas)) in false
 	
 	
-	let fv formula = [V("a")]
+	let fv formula =
+		let rec term_vars term =
+			match term with
+				 C(s)-> []
+				|V(s)-> [s]
+				|F(s,termsl)-> List.flatten(List.map term_vars termsl)
+		in
+		let rec fvh form = 
+			match form with
+				 PRED(s, termsl) -> remove_duplicates (List.flatten(List.map term_vars termsl))
+				|NOT(f) -> fvh f
+				|AND(f1,f2) -> remove_duplicates ((fvh f1)@(fvh f2))
+				|OR(f1,f2) -> remove_duplicates ((fvh f1)@(fvh f2))
+				|FORALL(t,f) -> (match t with 
+									 V(s)-> List.filter (fun x->x<>s) (fvh f)
+									|_-> let _ = raise (Not_wff([],[])) in fvh f
+								)
+				|EXISTS(t,f) -> (match t with 
+									 V(s)-> List.filter (fun x->x<>s) (fvh f)
+									|_-> let _ = raise (Not_wff([],[])) in fvh f
+								)
+		in
+			fvh formula
+		
 	let closed formula = true
 	let scnf formula = formula
 	let dpll formula n = ([V("a")], [PRED("aa",[V("a")])])
@@ -103,7 +126,9 @@ struct
 end;;
 (*
 let t1 = Assignment3.C "a";;
-let fml = Assignment3.AND(Assignment3.PRED("p", [Assignment3.F("f",[t1]); Assignment3.F("f",[t1]); t1]), Assignment3.NOT(Assignment3.PRED("p",[t1;t1;t1])));;
-Assignment3.wff fml;;
+let v = Assignment3.V "x";;
+let v1 = Assignment3.V "y";;
+let fml = Assignment3.AND(Assignment3.PRED("p", [Assignment3.F("f",[t1]); Assignment3.F("f",[t1]); t1]), Assignment3.NOT(Assignment3.FORALL(v, Assignment3.PRED("p",[t1;v1;v1]))));;
+Assignment3.fv fml;;
 
 *)
