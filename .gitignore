@@ -1,4 +1,5 @@
 *.tgz
 *.cmi
 *.cmo
-*.tgz
+*.out
+*.exe
