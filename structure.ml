@@ -98,7 +98,7 @@ struct
 		let rec term_vars term =
 			match term with
 				 C(s)-> []
-				|V(s)-> [s]
+				|V(s)-> [term]
 				|F(s,termsl)-> List.flatten(List.map term_vars termsl)
 		in
 		let rec fvh form = 
@@ -108,27 +108,33 @@ struct
 				|AND(f1,f2) -> remove_duplicates ((fvh f1)@(fvh f2))
 				|OR(f1,f2) -> remove_duplicates ((fvh f1)@(fvh f2))
 				|FORALL(t,f) -> (match t with 
-									 V(s)-> List.filter (fun x->x<>s) (fvh f)
+									 V(s)-> List.filter (fun x->x<>t) (fvh f)
 									|_-> let _ = raise (Not_wff([],[])) in fvh f
 								)
 				|EXISTS(t,f) -> (match t with 
-									 V(s)-> List.filter (fun x->x<>s) (fvh f)
+									 V(s)-> List.filter (fun x->x<>t) (fvh f)
 									|_-> let _ = raise (Not_wff([],[])) in fvh f
 								)
 		in
 			fvh formula
 		
-	let closed formula = true
+	let closed formula =
+		let free_variables = fv formula in
+		if List.length free_variables > 0 then
+			raise (Not_closed(free_variables))
+		else
+			true
 	let scnf formula = formula
 	let dpll formula n = ([V("a")], [PRED("aa",[V("a")])])
 	let sat formula n = (true, [V("a")], [PRED("aa",[V("a")])])
 	
 end;;
-(*
 let t1 = Assignment3.C "a";;
 let v = Assignment3.V "x";;
 let v1 = Assignment3.V "y";;
 let fml = Assignment3.AND(Assignment3.PRED("p", [Assignment3.F("f",[t1]); Assignment3.F("f",[t1]); t1]), Assignment3.NOT(Assignment3.FORALL(v, Assignment3.PRED("p",[t1;v1;v1]))));;
 Assignment3.fv fml;;
+Assignment3.closed fml;;
 
+(*
 *)
