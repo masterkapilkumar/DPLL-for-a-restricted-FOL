@@ -93,14 +93,13 @@ struct
 					true
 				else let _ = raise (Not_wff(all_invalid_terms, all_invalid_formulas)) in false
 	
+	let rec term_vars term =
+		match term with
+			 C(s)-> []
+			|V(s)-> [term]
+			|F(s,termsl)-> List.flatten(List.map term_vars termsl)
 	
 	let fv formula =
-		let rec term_vars term =
-			match term with
-				 C(s)-> []
-				|V(s)-> [term]
-				|F(s,termsl)-> List.flatten(List.map term_vars termsl)
-		in
 		let rec fvh form = 
 			match form with
 				 PRED(s, termsl) -> remove_duplicates (List.flatten(List.map term_vars termsl))
@@ -124,7 +123,89 @@ struct
 			raise (Not_closed(free_variables))
 		else
 			true
-	let scnf formula = formula
+	
+	let rec cnf form =
+		let rec cnfHelper p1 p2 =
+			match (p1,p2) with
+				 (p1, AND(p,q)) -> AND(cnfHelper p1 p, cnfHelper p1 q)
+				|(AND(p,q), p1) -> AND(cnfHelper p p1, cnfHelper q p1)
+				|_ -> OR(p1,p2)
+		in
+		match form with
+			 AND(p,q) -> AND(cnf p, cnf q)
+			|OR(p,q) -> cnfHelper (cnf p) (cnf q)
+			|_ -> form					
+	
+	let rec nnf formula =
+		match formula with
+			 NOT(NOT(t)) -> nnf t
+			|NOT(AND(s,t)) -> OR(nnf (NOT s), nnf (NOT t))  
+			|NOT(OR(s,t)) -> AND(nnf (NOT s), nnf (NOT t))  
+			|NOT(FORALL(s,t)) -> EXISTS(s, nnf(NOT t))
+			|NOT(EXISTS(s,t)) -> FORALL(s, nnf (NOT t))
+			|AND(s,t) -> AND(nnf s, nnf t)  
+			|OR(s,t) -> OR(nnf s, nnf t)  
+			|FORALL(s,t) -> FORALL(s, nnf t)
+			|EXISTS(s,t) -> EXISTS(s, nnf t)
+			|_ -> formula
+	
+	let pcnf formula =
+		let rec term_replace x z term =
+			match term with
+				 V(c) -> if(c=x) then V(z)
+						 else V(c)
+				|C(s) -> C(s)
+				|F(s,e) -> F(s, List.map (term_replace x z) e)
+		in
+		let rec variant x vars =
+			if (List.mem (V x) vars) then
+				variant (x^"'") vars
+			else
+				x
+		in
+		(* Replace x with z in formula p *)
+		let rec replace x z p =
+			match p with
+			   FORALL(s,t) -> FORALL(s, replace x z t)        (*TODO: check admissibility of substitution inside quantifier - substq function*)
+			  |EXISTS(s,t) -> EXISTS(s, replace x z t)        (*check admissibility of substitution inside quantifier*)
+			  |PRED(s,t) -> PRED(s, List.map (term_replace x z) t)
+			  |AND(s,t) -> AND(replace x z s, replace x z t)
+			  |OR(s,t) -> OR(replace x z s, replace x z t)
+			  |NOT(s) -> NOT(replace x z s)
+		in
+		let rec moveQ form =
+			match form with
+				 AND(FORALL(V(x),p),FORALL(V(y),q)) -> let z = variant x (fv form) in FORALL(V(z), moveQ (AND(replace x z p, replace y z q)))
+				|OR(EXISTS(V(x),p),EXISTS(V(y),q)) -> let z = variant x (fv form) in EXISTS(V(z), moveQ (OR(replace x z p, replace y z q)))
+				|AND(FORALL(V(x),p),q) -> let z = variant x (fv form) in FORALL(V(z), moveQ (AND(replace x z p, q)))
+				|AND(q,FORALL(V(x),p)) -> let z = variant x (fv form) in FORALL(V(z), moveQ (AND(q, replace x z p)))
+				|OR(FORALL(V(x),p),q) -> let z = variant x (fv form) in FORALL(V(z), moveQ (OR(replace x z p, q)))
+				|OR(q,FORALL(V(x),p)) -> let z = variant x (fv form) in FORALL(V(z), moveQ (OR(q, replace x z p)))
+				|AND(EXISTS(V(x),p),q) -> let z = variant x (fv form) in EXISTS(V(z), moveQ (AND(replace x z p, q)))
+				|AND(q,EXISTS(V(x),p)) -> let z = variant x (fv form) in EXISTS(V(z), moveQ (AND(q, replace x z p)))
+				|OR(EXISTS(V(x),p),q) -> let z = variant x (fv form) in EXISTS(V(z), moveQ (OR(replace x z p, q)))
+				|OR(q,EXISTS(V(x),p)) -> let z = variant x (fv form) in EXISTS(V(z), moveQ (OR(q, replace x z p)))
+				|_ -> form
+		in
+		let rec prenex form =
+			match form with
+				 FORALL(s,t) -> FORALL(s,prenex t)
+				|EXISTS(s,t) -> EXISTS(s,prenex t)
+				|AND(p,q) -> moveQ (AND(prenex p, prenex q))
+				|OR(p,q) ->  moveQ (OR(prenex p, prenex q))
+				|_ -> form
+		in
+		let rec makePcnf pnf =
+			match pnf with
+			 FORALL(s,t) -> FORALL(s, makePcnf t)
+			|EXISTS(s,t) ->  EXISTS(s, makePcnf t)
+			|t -> cnf t
+		in
+		let pnf = prenex (nnf formula)
+		in
+			makePcnf pnf
+	
+	let scnf formula = pcnf formula
 	let dpll formula n = ([V("a")], [PRED("aa",[V("a")])])
 	let sat formula n = (true, [V("a")], [PRED("aa",[V("a")])])
 	
@@ -132,9 +213,15 @@ end;;
 let t1 = Assignment3.C "a";;
 let v = Assignment3.V "x";;
 let v1 = Assignment3.V "y";;
-let fml = Assignment3.AND(Assignment3.PRED("p", [Assignment3.F("f",[t1]); Assignment3.F("f",[t1]); t1]), Assignment3.NOT(Assignment3.FORALL(v, Assignment3.PRED("p",[t1;v1;v1]))));;
-Assignment3.fv fml;;
-Assignment3.closed fml;;
+(* let fml = Assignment3.AND(Assignment3.PRED("p", [Assignment3.F("f",[t1]); Assignment3.F("f",[t1])]), Assignment3.NOT(Assignment3.FORALL(v1, Assignment3.PRED("p",[v1]))));; *)
+let fml = Assignment3.AND(Assignment3.FORALL(v1, Assignment3.PRED("p",[v1])), Assignment3.NOT(Assignment3.FORALL(v1, Assignment3.PRED("p",[v1]))));;
+let z = Assignment3.V("z");;
+let x = Assignment3.V("x");;
+let y = Assignment3.V("y");;
+let fml1 = Assignment3.AND (Assignment3.PRED("p", [z]), Assignment3.FORALL(x, Assignment3.AND(Assignment3.PRED("p", [x]), Assignment3.FORALL(x, Assignment3.OR(Assignment3.PRED("p", [y]), Assignment3.PRED("p", [x]))))));;
+(* Assignment3.fv fml;; *)
+(* Assignment3.closed fml;; *)
+Assignment3.scnf fml1;;
 
 (*
 *)
