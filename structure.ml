@@ -25,23 +25,22 @@ struct
 				|[] -> forms_set
 		in
 			remove_dups form_list []
+	let rec find_terms_in_term term =
+		match term with
+			 C(s)-> []
+			|V(s)-> []
+			|F(s,termsl)-> term::(List.flatten(List.map find_terms_in_term termsl))
+			
+	let rec find_terms_in_formula form =
+		match form with
+			 PRED(s, termsl) -> List.flatten(List.map find_terms_in_term termsl)
+			|NOT(f) -> find_terms_in_formula f
+			|AND(f1,f2) -> (find_terms_in_formula f1)@(find_terms_in_formula f2)
+			|OR(f1,f2) -> (find_terms_in_formula f1)@(find_terms_in_formula f2)
+			|FORALL(t,f) -> find_terms_in_formula f
+			|EXISTS(t,f) -> find_terms_in_formula f
 	
 	let wff formula =
-		let rec find_terms_in_term term =
-			match term with
-				 C(s)-> []
-				|V(s)-> []
-				|F(s,termsl)-> term::(List.flatten(List.map find_terms_in_term termsl))
-		in		
-		let rec find_terms_in_formula form =
-			match form with
-				 PRED(s, termsl) -> List.flatten(List.map find_terms_in_term termsl)
-				|NOT(f) -> find_terms_in_formula f
-				|AND(f1,f2) -> (find_terms_in_formula f1)@(find_terms_in_formula f2)
-				|OR(f1,f2) -> (find_terms_in_formula f1)@(find_terms_in_formula f2)
-				|FORALL(t,f) -> find_terms_in_formula f
-				|EXISTS(t,f) -> find_terms_in_formula f
-		in
 		let rec find_formula form =
 			match form with
 				 PRED(s, termsl) -> [form]
@@ -198,30 +197,185 @@ struct
 		let rec makePcnf pnf =
 			match pnf with
 			 FORALL(s,t) -> FORALL(s, makePcnf t)
-			|EXISTS(s,t) ->  EXISTS(s, makePcnf t)
+			|EXISTS(s,t) -> EXISTS(s, makePcnf t)
 			|t -> cnf t
 		in
 		let pnf = prenex (nnf formula)
 		in
 			makePcnf pnf
 	
-	let scnf formula = pcnf formula
-	let dpll formula n = ([V("a")], [PRED("aa",[V("a")])])
+	let rec get_formula_strings form =
+		match form with
+			 F(s,t)::xs -> s::(get_formula_strings t)@(get_formula_strings xs)
+			|_ -> []
+	
+	let scnf formula =
+		let rec replaceFuncTerm var func term =
+			match term with
+				 V(c) -> if(c=var) then func 
+						 else V(c)
+				|C(s) -> C(s)
+				|F(s,t) -> F(s, List.map (replaceFuncTerm var func) t)
+		in
+		let rec replaceFunc form var func =
+			match form with
+				 PRED(s,t) -> PRED(s, List.map (replaceFuncTerm var func) t)
+				|AND(p,q) -> AND(replaceFunc p var func, replaceFunc q var func)
+				|OR(p,q) -> OR(replaceFunc p var func, replaceFunc q var func)
+				|NOT(p) -> NOT(replaceFunc p var func)
+				|FORALL(s,t) -> FORALL(s,replaceFunc t var func)
+				|EXISTS(s,t) -> EXISTS(s,replaceFunc t var func)
+		in
+		let rec str_variant x funcs =
+			if (List.mem x funcs) then
+				str_variant (x^"'") funcs
+			else
+				x
+		in
+		let rec skolem form funcs vars =
+			match form with
+				 FORALL(V(s),t) -> let t_bar, funcs_bar = skolem t funcs (s::vars) in (FORALL(V(s),t_bar), funcs_bar)
+				(* |AND(p,q) -> let p1, funcs1 = skolem p funcs vars in *)
+							 (* let p2, funcs2 = skolem p1 funcs1 vars in *)
+							  (* (AND(p1,p2),funcs2) *)
+				(* |OR(p,q) -> let p1, funcs1 = skolem p funcs vars in *)
+							(* let p2, funcs2 = skolem p1 funcs1 vars in *)
+							 (* (OR(p1,p2),funcs2) *)
+				
+				|EXISTS(V(s),t) -> let z = if vars = [] then str_variant ("c_"^s) funcs else str_variant ("f_"^s) funcs in
+									(* let _ = Printf.printf "replace  %s\n" z in *)
+								skolem (replaceFunc t s (if vars=[] then C(z) else F(z, List.map (fun v-> V(v)) vars))) (z::funcs) vars
+				|_ -> (form, funcs)
+		in	
+		fst (skolem (pcnf formula) (remove_duplicates (get_formula_strings (find_terms_in_formula formula))) [])
+	
+	(* let rec print_term term = *)
+		(* match term with *)
+			(* C(s) -> Printf.printf "%s," s *)
+			(* |V(s) -> Printf.printf "%s," s *)
+			(* |F(s,t) -> let _= Printf.printf "%s(" s in let _= List.map print_term t in Printf.printf ")" *)
+	(* let rec print_form formula = *)
+		(* match formula with *)
+			(* PRED(s,t) -> let _= Printf.printf "%s(" s in let _= List.map print_term t in Printf.printf ")" *)
+			(* | NOT(s) -> let _=Printf.printf "NOT(" in let _=print_form s in Printf.printf ")" *)
+			(* | AND(p,q) -> let _=Printf.printf "AND(" in let _=print_form p in let _=Printf.printf "," in let _=print_form q in Printf.printf ")" *)
+			(* | OR(p,q) -> let _=Printf.printf "OR(" in let _=print_form p in let _=Printf.printf "," in let _=print_form q in Printf.printf ")" *)
+			(* | FORALL(s,t) -> let _=Printf.printf "FORALL(" in let _=(print_term s) in let _=Printf.printf "," in let _=(print_form t) in Printf.printf ")" *)
+			(* | EXISTS(s,t) ->  let _=Printf.printf "EXISTS(" in let _=(print_term s) in let _=Printf.printf "," in let _=(print_form t) in Printf.printf ")" *)
+	
+	let rec printTermlist (t_list:term list) = 
+		match t_list with
+		|[] -> ""
+		|C(s)::[] -> "const("^s^")"
+		|V(s)::[] -> "var("^s^")"
+		|F(s, t_l)::[] -> "func("^s^","^(printTermlist t_l)^")"
+		|C(s)::ts -> "const("^s^"),"^(printTermlist ts)
+		|V(s)::ts -> "var("^s^"),"^(printTermlist ts)
+		|F(s, t_l)::ts -> "func("^s^","^(printTermlist t_l)^"),"^(printTermlist ts)
+	let rec printFOL (l) = 
+		match l with
+		|PRED (s, t_l) -> "PRED("^s^","^(printTermlist t_l)^")"
+		|NOT (ll) -> "NOT("^(printFOL ll)^")"
+		|AND (ll, lr) -> "AND("^(printFOL ll)^","^(printFOL lr)^")"
+		|OR (ll, lr) -> "OR("^(printFOL ll)^","^(printFOL lr)^")"
+		|FORALL (V(s), ll) -> "FORALL("^"var("^s^")"^","^(printFOL ll)^")"
+		|EXISTS (V(s), ll) -> "EXISTS("^"var("^s^")"^","^(printFOL ll)^")"
+		| _ -> ""
+
+	let rec printFOLlist (l_list: form list) = 
+		match l_list with
+		|[] -> ""
+		|(PRED (s, t_l))::[] -> "PRED("^s^","^(printTermlist t_l)^")"
+		|(NOT (ll))::[] -> "NOT("^(printFOL ll)^")"
+		|(AND (ll, lr))::[] -> "AND("^(printFOL ll)^","^(printFOL lr)^")"
+		|( OR (ll, lr))::[] -> "OR("^(printFOL ll)^","^(printFOL lr)^")"
+		|(FORALL (V(s), ll))::[] -> "FORALL("^"var("^s^")"^","^(printFOL ll)^")"
+		|(EXISTS (V(s), ll))::[] -> "EXISTS("^"var("^s^")"^","^(printFOL ll)^")"
+		|(PRED (s, t_l))::lls -> "PRED("^s^","^(printTermlist t_l)^"),"^(printFOLlist lls)
+		|(NOT (ll))::lls -> "NOT("^(printFOL ll)^"),"^(printFOLlist lls)
+		|(AND (ll, lr))::lls -> "AND("^(printFOL ll)^","^(printFOL lr)^"),"^(printFOLlist lls)
+		|( OR (ll, lr))::lls -> "OR("^(printFOL ll)^","^(printFOL lr)^"),"^(printFOLlist lls)
+		|(FORALL (V(s), ll))::lls -> "FORALL("^"var("^s^")"^","^(printFOL ll)^"),"^(printFOLlist lls)
+		|(EXISTS (V(s), ll))::lls -> "EXISTS("^"var("^s^")"^","^(printFOL ll)^"),"^(printFOLlist lls)
+		| _ -> ""
+	
+	let dpll formula n =
+		let all_vals = ["a";"b";"c";"d";"e";"f";"g";"h";"i";"j";"k";"l";"m";"n";"o";"p";"q";"r";"s";"t";"u";"v";"w";"x";"y";"z"] in
+		let rec generate_consts n vals ret =
+			if n=0 then ret
+			else generate_consts (n-1) (List.tl vals) (ret@[List.hd vals])
+		in
+		let vals = generate_consts n all_vals [] in
+		(* let _ = List.map (fun xx-> Printf.printf "%s, " xx) vals in *)
+		let rec getcnf form =
+			match form with
+				 FORALL(_, t) -> getcnf t
+				|_ -> form
+		in
+		let rec getvars form =
+			match form with
+				 FORALL(v, t) -> v::(getvars t)
+				|_ -> []
+		in
+		let cnf_form = getcnf formula in
+		let cnf_vars = getvars formula in
+		(* let _ = List.map (fun xx-> Printf.printf "%s, " (match xx with V(s)->s)) cnf_vars in *)
+		let rec loop func i n assigned =
+			if i=n then ()
+			else 
+			let _ = func (assigned@[List.nth vals i]) in 
+				loop func (i+1) n assigned
+		in
+		let rec find_var_index ls var index =
+			if(var=(List.nth ls index)) then index
+			else find_var_index ls var (index+1)
+		in
+		let rec term_subst vars assigned_vals term =
+			match term with
+				 C(s)-> C(s)
+				|V(s)-> C(List.nth assigned_vals (find_var_index vars term 0))
+				|F(s,t)-> F(s, List.map (term_subst vars assigned_vals) t)
+		in
+		let rec do_subst form vars assigned_vals =
+			match form with
+				 AND(p,q) -> AND(do_subst p vars assigned_vals, do_subst q vars assigned_vals)
+				|OR(p,q) -> OR(do_subst p vars assigned_vals, do_subst q vars assigned_vals)
+				|NOT(p) -> NOT(do_subst p vars assigned_vals)
+				|PRED(s, t) -> PRED(s, List.map (term_subst vars assigned_vals) t)
+				|_ -> form
+		in
+		let rec assign_vals local_vars assigned =
+			match local_vars with
+				 v::vs -> loop (assign_vals vs) 0 (List.length vals) assigned
+				|[] -> let  new_formula = do_subst cnf_form cnf_vars assigned in 
+						Printf.printf "%s\n" (printFOL new_formula)
+		in
+			assign_vals cnf_vars []
+		
 	let sat formula n = (true, [V("a")], [PRED("aa",[V("a")])])
+	
+	
+	
+	
+	
 	
 end;;
 let t1 = Assignment3.C "a";;
 let v = Assignment3.V "x";;
 let v1 = Assignment3.V "y";;
+let v2 = Assignment3.V "ka";;
+let v3 = Assignment3.V "bp";;
 (* let fml = Assignment3.AND(Assignment3.PRED("p", [Assignment3.F("f",[t1]); Assignment3.F("f",[t1])]), Assignment3.NOT(Assignment3.FORALL(v1, Assignment3.PRED("p",[v1]))));; *)
-let fml = Assignment3.AND(Assignment3.FORALL(v1, Assignment3.PRED("p",[v1])), Assignment3.NOT(Assignment3.FORALL(v1, Assignment3.PRED("p",[v1]))));;
+let fml = Assignment3.AND(Assignment3.FORALL(v1, Assignment3.FORALL(v3,Assignment3.FORALL(v2,Assignment3.PRED("p",[v1])))), Assignment3.NOT(Assignment3.FORALL(v, Assignment3.PRED("p",[v]))));;
 let z = Assignment3.V("z");;
 let x = Assignment3.V("x");;
 let y = Assignment3.V("y");;
-let fml1 = Assignment3.AND (Assignment3.PRED("p", [z]), Assignment3.FORALL(x, Assignment3.AND(Assignment3.PRED("p", [x]), Assignment3.FORALL(x, Assignment3.OR(Assignment3.PRED("p", [y]), Assignment3.PRED("p", [x]))))));;
+(* let fml1 = Assignment3.OR (Assignment3.PRED("p", [z]), Assignment3.FORALL(x, Assignment3.AND(Assignment3.PRED("p", [x]), Assignment3.FORALL(x, Assignment3.OR(Assignment3.PRED("p", [y]), Assignment3.PRED("p", [x]))))));; *)
 (* Assignment3.fv fml;; *)
 (* Assignment3.closed fml;; *)
-Assignment3.scnf fml1;;
+Assignment3.pcnf fml;;
+Printf.printf "%s\n" (Assignment3.printFOL (Assignment3.scnf fml));;
+Assignment3.dpll (Assignment3.scnf fml) 2;;
 
 (*
 *)
