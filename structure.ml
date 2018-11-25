@@ -1,7 +1,7 @@
 open Signature
 open Printf
 
-module Assignment3 =
+module A3 : Assignment3 =
 struct
 	type term = C of string | V of string | F of string * (term list)
 	type form = PRED of string * (term list)
@@ -428,7 +428,7 @@ struct
 				 v::vs -> loop (assign_vals vs) 0 (List.length vals) assigned
 				|[] -> let new_formula = do_subst cnf_form cnf_vars assigned in 
 						let (is_valid, model) = prop_dpll (get_clauses new_formula) [] in
-						if(is_valid = true) then (* (term_list, pred_list) *) (vals, model) (* Write functions to fins terms and ground predicates *)
+						if(is_valid = true) then (* (term_list, pred_list) *) (List.map (fun s->C s) vals, model) (* Write functions to fins terms and ground predicates *)
 						else
 						(* let _ = Printf.printf "Not satisfiable -  %s\n" (printFOL new_formula) in *)
 						([],[])
@@ -452,41 +452,41 @@ end;;
 
 
 (*
-let t1 = Assignment3.C "a";;
-let v = Assignment3.V "x";;
-let v1 = Assignment3.V "y";;
-let v2 = Assignment3.V "ka";;
-let v3 = Assignment3.V "bp";;
-let fml2 = Assignment3.FORALL(v,Assignment3.FORALL(v1, Assignment3.AND(Assignment3.PRED("p",[v;v]),Assignment3.AND(Assignment3.NOT(Assignment3.PRED("p",[v;v1])),Assignment3.PRED("q",[v1])))));;
-let xx=Assignment3.cnf fml2;;
-(* let fml = Assignment3.AND(Assignment3.PRED("p", [Assignment3.F("f",[t1]); Assignment3.F("f",[t1])]), Assignment3.NOT(Assignment3.FORALL(v1, Assignment3.PRED("p",[v1]))));; *)
-let fml = Assignment3.AND(Assignment3.FORALL(v1, Assignment3.FORALL(v3,Assignment3.FORALL(v2,Assignment3.PRED("p",[v1])))), Assignment3.NOT(Assignment3.FORALL(v, Assignment3.PRED("p",[v]))));;
-let z = Assignment3.V("z");;
-let x = Assignment3.V("x");;
-let y = Assignment3.V("y");;
-(* let fml1 = Assignment3.OR (Assignment3.PRED("p", [z]), Assignment3.FORALL(x, Assignment3.AND(Assignment3.PRED("p", [x]), Assignment3.FORALL(x, Assignment3.OR(Assignment3.PRED("p", [y]), Assignment3.PRED("p", [x]))))));; *)
-(* Assignment3.fv fml;; *)
-(* Assignment3.closed fml;; *)
-(* Assignment3.wff fml2;; *)
-Printf.printf "%s\n" (Assignment3.printFOL (Assignment3.scnf fml2));;
-(* Assignment3.dpll (Assignment3.scnf fml2) 2;; *)
-Assignment3.sat fml2 4;;
+let t1 = A3.C "a";;
+let v = A3.V "x";;
+let v1 = A3.V "y";;
+let v2 = A3.V "ka";;
+let v3 = A3.V "bp";;
+let fml2 = A3.FORALL(v,A3.FORALL(v1, A3.AND(A3.PRED("p",[v;v]),A3.AND(A3.NOT(A3.PRED("p",[v;v1])),A3.PRED("q",[v1])))));;
+let xx=A3.cnf fml2;;
+(* let fml = A3.AND(A3.PRED("p", [A3.F("f",[t1]); A3.F("f",[t1])]), A3.NOT(A3.FORALL(v1, A3.PRED("p",[v1]))));; *)
+let fml = A3.AND(A3.FORALL(v1, A3.FORALL(v3,A3.FORALL(v2,A3.PRED("p",[v1])))), A3.NOT(A3.FORALL(v, A3.PRED("p",[v]))));;
+let z = A3.V("z");;
+let x = A3.V("x");;
+let y = A3.V("y");;
+(* let fml1 = A3.OR (A3.PRED("p", [z]), A3.FORALL(x, A3.AND(A3.PRED("p", [x]), A3.FORALL(x, A3.OR(A3.PRED("p", [y]), A3.PRED("p", [x]))))));; *)
+(* A3.fv fml;; *)
+(* A3.closed fml;; *)
+(* A3.wff fml2;; *)
+Printf.printf "%s\n" (A3.printFOL (A3.scnf fml2));;
+(* A3.dpll (A3.scnf fml2) 2;; *)
+A3.sat fml2 4;;
 
 
 *)
 
 
-(* let t1 = Assignment3.C "romeo";; *)
-(* let t2 = Assignment3.C "juliet";; *)
-(* let t7 = Assignment3.C "habibi";; *)
-(* let t5 = Assignment3.V "z";; *)
-(* let t6 = Assignment3.V "y";; *)
-(* let t3 = Assignment3.F("s", [t5;t2]);; *)
-(* let t4 = Assignment3.F("s", [t1;t2;t2]);; *)
+(* let t1 = A3.C "romeo";; *)
+(* let t2 = A3.C "juliet";; *)
+(* let t7 = A3.C "habibi";; *)
+(* let t5 = A3.V "z";; *)
+(* let t6 = A3.V "y";; *)
+(* let t3 = A3.F("s", [t5;t2]);; *)
+(* let t4 = A3.F("s", [t1;t2;t2]);; *)
 
-(* let fml1 = Assignment3.EXISTS(Assignment3.V "z", Assignment3.FORALL(Assignment3.V "y", Assignment3.EXISTS(Assignment3.V "x", Assignment3.AND(Assignment3.PRED("r", [Assignment3.V("x"); t3;t4]), Assignment3.AND(Assignment3.PRED("q", [t1;t2;t7]), Assignment3.PRED("q", [Assignment3.V("x"); Assignment3.V("y")]))) ) ) );; *)
+(* let fml1 = A3.EXISTS(A3.V "z", A3.FORALL(A3.V "y", A3.EXISTS(A3.V "x", A3.AND(A3.PRED("r", [A3.V("x"); t3;t4]), A3.AND(A3.PRED("q", [t1;t2;t7]), A3.PRED("q", [A3.V("x"); A3.V("y")]))) ) ) );; *)
 
-(* let fml2 = Assignment3.EXISTS(Assignment3.V "a", Assignment3.FORALL(Assignment3.V "z", Assignment3.EXISTS(Assignment3.V "c", Assignment3.EXISTS(Assignment3.V "d", Assignment3.EXISTS(Assignment3.V "e", Assignment3.EXISTS(Assignment3.V "f", Assignment3.EXISTS(Assignment3.V "g", Assignment3.EXISTS(Assignment3.V "h", Assignment3.EXISTS(Assignment3.V "i", Assignment3.EXISTS(Assignment3.V "j", Assignment3.EXISTS(Assignment3.V "k", Assignment3.EXISTS(Assignment3.V "l", Assignment3.EXISTS(Assignment3.V "m", Assignment3.EXISTS(Assignment3.V "n", Assignment3.FORALL(Assignment3.V "o", Assignment3.FORALL(Assignment3.V "p", Assignment3.FORALL(Assignment3.V "q", Assignment3.FORALL(Assignment3.V "r", Assignment3.FORALL(Assignment3.V "s", Assignment3.FORALL(Assignment3.V "t", Assignment3.FORALL(Assignment3.V "u", Assignment3.FORALL(Assignment3.V "v", Assignment3.FORALL(Assignment3.V "w", Assignment3.FORALL(Assignment3.V "x", Assignment3.FORALL(Assignment3.V "y", Assignment3.EXISTS(Assignment3.V "z", Assignment3.FORALL(Assignment3.V "aa", Assignment3.FORALL(Assignment3.V "ab", Assignment3.PRED("s",[t1;t2;t3])))))))))))))))))))))))))))));; *)
+(* let fml2 = A3.EXISTS(A3.V "a", A3.FORALL(A3.V "z", A3.EXISTS(A3.V "c", A3.EXISTS(A3.V "d", A3.EXISTS(A3.V "e", A3.EXISTS(A3.V "f", A3.EXISTS(A3.V "g", A3.EXISTS(A3.V "h", A3.EXISTS(A3.V "i", A3.EXISTS(A3.V "j", A3.EXISTS(A3.V "k", A3.EXISTS(A3.V "l", A3.EXISTS(A3.V "m", A3.EXISTS(A3.V "n", A3.FORALL(A3.V "o", A3.FORALL(A3.V "p", A3.FORALL(A3.V "q", A3.FORALL(A3.V "r", A3.FORALL(A3.V "s", A3.FORALL(A3.V "t", A3.FORALL(A3.V "u", A3.FORALL(A3.V "v", A3.FORALL(A3.V "w", A3.FORALL(A3.V "x", A3.FORALL(A3.V "y", A3.EXISTS(A3.V "z", A3.FORALL(A3.V "aa", A3.FORALL(A3.V "ab", A3.PRED("s",[t1;t2;t3])))))))))))))))))))))))))))));; *)
 
-(* Assignment3.sat fml2 10;; *)
-(* Assignment3.scnf fml2;; *)
+(* A3.sat fml2 10;; *)
+(* A3.scnf fml2;; *)

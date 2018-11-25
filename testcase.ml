@@ -1,4 +1,4 @@
-open Structure.Assignment3
+open Structure.A3
 
 (*
 let t1 = C "romeo";;
