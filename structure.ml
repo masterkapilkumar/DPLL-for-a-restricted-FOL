@@ -249,55 +249,133 @@ struct
 		in	
 		fst (skolem (pcnf formula) (remove_duplicates (get_formula_strings (find_terms_in_formula formula))) [])
 	
-	(* let rec print_term term = *)
-		(* match term with *)
-			(* C(s) -> Printf.printf "%s," s *)
-			(* |V(s) -> Printf.printf "%s," s *)
-			(* |F(s,t) -> let _= Printf.printf "%s(" s in let _= List.map print_term t in Printf.printf ")" *)
-	(* let rec print_form formula = *)
-		(* match formula with *)
-			(* PRED(s,t) -> let _= Printf.printf "%s(" s in let _= List.map print_term t in Printf.printf ")" *)
-			(* | NOT(s) -> let _=Printf.printf "NOT(" in let _=print_form s in Printf.printf ")" *)
-			(* | AND(p,q) -> let _=Printf.printf "AND(" in let _=print_form p in let _=Printf.printf "," in let _=print_form q in Printf.printf ")" *)
-			(* | OR(p,q) -> let _=Printf.printf "OR(" in let _=print_form p in let _=Printf.printf "," in let _=print_form q in Printf.printf ")" *)
-			(* | FORALL(s,t) -> let _=Printf.printf "FORALL(" in let _=(print_term s) in let _=Printf.printf "," in let _=(print_form t) in Printf.printf ")" *)
-			(* | EXISTS(s,t) ->  let _=Printf.printf "EXISTS(" in let _=(print_term s) in let _=Printf.printf "," in let _=(print_form t) in Printf.printf ")" *)
 	
-	let rec printTermlist (t_list:term list) = 
-		match t_list with
-		|[] -> ""
-		|C(s)::[] -> "const("^s^")"
-		|V(s)::[] -> "var("^s^")"
-		|F(s, t_l)::[] -> "func("^s^","^(printTermlist t_l)^")"
-		|C(s)::ts -> "const("^s^"),"^(printTermlist ts)
-		|V(s)::ts -> "var("^s^"),"^(printTermlist ts)
-		|F(s, t_l)::ts -> "func("^s^","^(printTermlist t_l)^"),"^(printTermlist ts)
-	let rec printFOL (l) = 
-		match l with
-		|PRED (s, t_l) -> "PRED("^s^","^(printTermlist t_l)^")"
-		|NOT (ll) -> "NOT("^(printFOL ll)^")"
-		|AND (ll, lr) -> "AND("^(printFOL ll)^","^(printFOL lr)^")"
-		|OR (ll, lr) -> "OR("^(printFOL ll)^","^(printFOL lr)^")"
-		|FORALL (V(s), ll) -> "FORALL("^"var("^s^")"^","^(printFOL ll)^")"
-		|EXISTS (V(s), ll) -> "EXISTS("^"var("^s^")"^","^(printFOL ll)^")"
-		| _ -> ""
+	(* let rec printTermlist (t_list:term list) =  *)
+		(* match t_list with *)
+		(* |[] -> "" *)
+		(* |C(s)::[] -> "const("^s^")" *)
+		(* |V(s)::[] -> "var("^s^")" *)
+		(* |F(s, t_l)::[] -> "func("^s^","^(printTermlist t_l)^")" *)
+		(* |C(s)::ts -> "const("^s^"),"^(printTermlist ts) *)
+		(* |V(s)::ts -> "var("^s^"),"^(printTermlist ts) *)
+		(* |F(s, t_l)::ts -> "func("^s^","^(printTermlist t_l)^"),"^(printTermlist ts) *)
+	(* let rec printFOL (l) =  *)
+		(* match l with *)
+		(* |PRED (s, t_l) -> "PRED("^s^","^(printTermlist t_l)^")" *)
+		(* |NOT (ll) -> "NOT("^(printFOL ll)^")" *)
+		(* |AND (ll, lr) -> "AND("^(printFOL ll)^","^(printFOL lr)^")" *)
+		(* |OR (ll, lr) -> "OR("^(printFOL ll)^","^(printFOL lr)^")" *)
+		(* |FORALL (V(s), ll) -> "FORALL("^"var("^s^")"^","^(printFOL ll)^")" *)
+		(* |EXISTS (V(s), ll) -> "EXISTS("^"var("^s^")"^","^(printFOL ll)^")" *)
+		(* | _ -> "" *)
 
-	let rec printFOLlist (l_list: form list) = 
-		match l_list with
-		|[] -> ""
-		|(PRED (s, t_l))::[] -> "PRED("^s^","^(printTermlist t_l)^")"
-		|(NOT (ll))::[] -> "NOT("^(printFOL ll)^")"
-		|(AND (ll, lr))::[] -> "AND("^(printFOL ll)^","^(printFOL lr)^")"
-		|( OR (ll, lr))::[] -> "OR("^(printFOL ll)^","^(printFOL lr)^")"
-		|(FORALL (V(s), ll))::[] -> "FORALL("^"var("^s^")"^","^(printFOL ll)^")"
-		|(EXISTS (V(s), ll))::[] -> "EXISTS("^"var("^s^")"^","^(printFOL ll)^")"
-		|(PRED (s, t_l))::lls -> "PRED("^s^","^(printTermlist t_l)^"),"^(printFOLlist lls)
-		|(NOT (ll))::lls -> "NOT("^(printFOL ll)^"),"^(printFOLlist lls)
-		|(AND (ll, lr))::lls -> "AND("^(printFOL ll)^","^(printFOL lr)^"),"^(printFOLlist lls)
-		|( OR (ll, lr))::lls -> "OR("^(printFOL ll)^","^(printFOL lr)^"),"^(printFOLlist lls)
-		|(FORALL (V(s), ll))::lls -> "FORALL("^"var("^s^")"^","^(printFOL ll)^"),"^(printFOLlist lls)
-		|(EXISTS (V(s), ll))::lls -> "EXISTS("^"var("^s^")"^","^(printFOL ll)^"),"^(printFOLlist lls)
-		| _ -> ""
+	(* let rec printFOLlist (l_list: form list) =  *)
+		(* match l_list with *)
+		(* |[] -> "" *)
+		(* |(PRED (s, t_l))::[] -> "PRED("^s^","^(printTermlist t_l)^")" *)
+		(* |(NOT (ll))::[] -> "NOT("^(printFOL ll)^")" *)
+		(* |(AND (ll, lr))::[] -> "AND("^(printFOL ll)^","^(printFOL lr)^")" *)
+		(* |( OR (ll, lr))::[] -> "OR("^(printFOL ll)^","^(printFOL lr)^")" *)
+		(* |(FORALL (V(s), ll))::[] -> "FORALL("^"var("^s^")"^","^(printFOL ll)^")" *)
+		(* |(EXISTS (V(s), ll))::[] -> "EXISTS("^"var("^s^")"^","^(printFOL ll)^")" *)
+		(* |(PRED (s, t_l))::lls -> "PRED("^s^","^(printTermlist t_l)^"),"^(printFOLlist lls) *)
+		(* |(NOT (ll))::lls -> "NOT("^(printFOL ll)^"),"^(printFOLlist lls) *)
+		(* |(AND (ll, lr))::lls -> "AND("^(printFOL ll)^","^(printFOL lr)^"),"^(printFOLlist lls) *)
+		(* |( OR (ll, lr))::lls -> "OR("^(printFOL ll)^","^(printFOL lr)^"),"^(printFOLlist lls) *)
+		(* |(FORALL (V(s), ll))::lls -> "FORALL("^"var("^s^")"^","^(printFOL ll)^"),"^(printFOLlist lls) *)
+		(* |(EXISTS (V(s), ll))::lls -> "EXISTS("^"var("^s^")"^","^(printFOL ll)^"),"^(printFOLlist lls) *)
+		(* | _ -> "" *)
+	
+	let rec make_lit cnff =
+		match cnff with
+			x::xs-> if xs=[] then x else OR(x, make_lit xs)
+			|_-> PRED("khaali_clause",[])
+	
+	let rec make_form cnff =
+		match cnff with
+			x::xs-> 
+					if xs=[] then make_lit x else AND(make_lit x, make_form xs)
+			|_-> PRED("khaali_clause_list",[])
+	
+	let rec prop_dpll cnf model =
+		
+		let propogate cnf clause =
+			match clause with
+				 NOT(cls) -> let cnf' = List.filter (fun c-> try let _ = List.find (fun lit-> lit=clause) c in false with Not_found -> true) cnf in
+							 List.map (fun c-> List.filter (fun lit-> lit <> cls) c) cnf'
+				|_ -> let cnf' = List.filter (fun c-> try let _=List.find (fun lit-> lit=clause) c in false with Not_found -> true) cnf in
+						List.map (fun c-> List.filter (fun lit-> lit <> NOT(clause)) c) cnf'
+		in
+		let rec unit_propogate cnf clauses =
+			try
+				let unit_clause = List.hd (List.find (fun x-> (List.length x)=1) cnf) in
+				let modified_cnf = propogate cnf unit_clause in
+					unit_propogate modified_cnf (unit_clause::clauses)
+			with Not_found -> (cnf, clauses)
+		in
+		(* let rec print_list = function  *)
+			(* [] -> () *)
+			(* | e::l -> Printf.printf "%s" (printFOL e) ; print_string " " ; print_list l *)
+			(* in *)
+		let rec get_literals cnf =
+			let lits = List.flatten cnf in
+			
+			List.filter (
+				fun lit->
+				try
+					 match lit with NOT(l)-> let _=List.find (fun ll->l=ll) lits in false | _-> let _=List.find (fun ll->ll=NOT(lit)) lits in false
+				with Not_found -> true
+			) lits
+		in
+		let rec delete_literal cnf pure_lit =
+			List.filter (fun c-> try let _ = List.find (fun lit-> lit=pure_lit) c in false with Not_found -> true) cnf
+		in
+		let rec pure_literal_propogate cnf clauses =
+
+			let pure_literals = get_literals cnf in
+			(* let _=Printf.printf "\n"  in *)
+			(* let _=print_list pure_literals in *)
+			(* let _=Printf.printf "\n"  in *)
+			if(pure_literals=[]) then (cnf, clauses)
+			else
+			let pure_literal = List.hd pure_literals in
+			let modified_cnf = delete_literal cnf pure_literal in
+				pure_literal_propogate modified_cnf (pure_literal::clauses)
+
+		in
+		let rec is_empty_clause cnf =
+			match cnf with
+				 []::xs -> true
+				|cls::xs -> is_empty_clause xs
+				|_ -> false
+		in
+			if(cnf=[]) then (true, model)
+			else if (is_empty_clause cnf) then (false, model)
+			else
+				let (modified_cnf, clauses1) = unit_propogate cnf [] in
+				if (is_empty_clause modified_cnf) then (false, clauses1@model)
+				else
+				let (modified_cnf, clauses2) = pure_literal_propogate modified_cnf [] in
+				if (is_empty_clause modified_cnf) then (false, clauses1@clauses2@model)
+				else
+				(* let _ = Printf.printf "%s\n" (printFOL (make_form cnf)) in *)
+				(* let _ = Printf.printf "%s\n" (printFOL (make_form modified_cnf)) in *)
+			let lit = List.hd (List.flatten cnf) in
+			if(modified_cnf=[]) then (true, clauses1@clauses2@model)
+			else if( match (prop_dpll ([lit]::modified_cnf) (clauses1@clauses2@model)) with (value, _)->value) then (true, clauses1@clauses2@model)
+			else if( match (prop_dpll ([NOT(lit)]::modified_cnf) (clauses1@clauses2@model)) with (value, _)->value) then (true, clauses1@clauses2@model)
+			else (false, clauses1@clauses2@model)
+	
+	let rec get_lit_list clause =
+		match clause with
+			 OR(p,q) -> (get_lit_list p) @ (get_lit_list q)
+			|_ -> [clause]
+	
+	let rec get_clauses formula =
+		match formula with
+			 AND(p,q) -> (get_clauses p) @ (get_clauses q)
+			|_ -> [get_lit_list formula]
+			
 	
 	let dpll formula n =
 		let all_vals = ["a";"b";"c";"d";"e";"f";"g";"h";"i";"j";"k";"l";"m";"n";"o";"p";"q";"r";"s";"t";"u";"v";"w";"x";"y";"z"] in
@@ -321,10 +399,11 @@ struct
 		let cnf_vars = getvars formula in
 		(* let _ = List.map (fun xx-> Printf.printf "%s, " (match xx with V(s)->s)) cnf_vars in *)
 		let rec loop func i n assigned =
-			if i=n then ()
+			if i=n then ([],[])
 			else 
-			let _ = func (assigned@[List.nth vals i]) in 
-				loop func (i+1) n assigned
+			let (tl, pl) = func (assigned@[C(List.nth vals i)]) in
+				if(tl=[]) then loop func (i+1) n assigned
+				else (tl, pl)
 		in
 		let rec find_var_index ls var index =
 			if(var=(List.nth ls index)) then index
@@ -333,7 +412,7 @@ struct
 		let rec term_subst vars assigned_vals term =
 			match term with
 				 C(s)-> C(s)
-				|V(s)-> C(List.nth assigned_vals (find_var_index vars term 0))
+				|V(s)-> List.nth assigned_vals (find_var_index vars term 0)
 				|F(s,t)-> F(s, List.map (term_subst vars assigned_vals) t)
 		in
 		let rec do_subst form vars assigned_vals =
@@ -347,24 +426,39 @@ struct
 		let rec assign_vals local_vars assigned =
 			match local_vars with
 				 v::vs -> loop (assign_vals vs) 0 (List.length vals) assigned
-				|[] -> let  new_formula = do_subst cnf_form cnf_vars assigned in 
-						Printf.printf "%s\n" (printFOL new_formula)
+				|[] -> let new_formula = do_subst cnf_form cnf_vars assigned in 
+						let (is_valid, model) = prop_dpll (get_clauses new_formula) [] in
+						if(is_valid = true) then (* (term_list, pred_list) *) (vals, model) (* Write functions to fins terms and ground predicates *)
+						else
+						(* let _ = Printf.printf "Not satisfiable -  %s\n" (printFOL new_formula) in *)
+						([],[])
 		in
-			assign_vals cnf_vars []
+			let (tl, pl) = assign_vals cnf_vars [] in
+			if(tl=[]) then raise (DPLL_unsat n)
+			else (tl, pl)
 		
-	let sat formula n = (true, [V("a")], [PRED("aa",[V("a")])])
-	
-	
-	
-	
-	
-	
+	let sat formula k = 
+		let rec sat_helper form j =
+			if (j>k) then (false, [], []) else
+			try	let (terms, forms) = dpll form j in
+				(true, terms, forms)
+			with DPLL_unsat(x) -> sat_helper form (j+1)
+		in
+		let _ = wff formula in
+		let _ = closed formula in
+		let scnf_form = scnf formula in
+			sat_helper scnf_form 1
 end;;
+
+
+(*
 let t1 = Assignment3.C "a";;
 let v = Assignment3.V "x";;
 let v1 = Assignment3.V "y";;
 let v2 = Assignment3.V "ka";;
 let v3 = Assignment3.V "bp";;
+let fml2 = Assignment3.FORALL(v,Assignment3.FORALL(v1, Assignment3.AND(Assignment3.PRED("p",[v;v]),Assignment3.AND(Assignment3.NOT(Assignment3.PRED("p",[v;v1])),Assignment3.PRED("q",[v1])))));;
+let xx=Assignment3.cnf fml2;;
 (* let fml = Assignment3.AND(Assignment3.PRED("p", [Assignment3.F("f",[t1]); Assignment3.F("f",[t1])]), Assignment3.NOT(Assignment3.FORALL(v1, Assignment3.PRED("p",[v1]))));; *)
 let fml = Assignment3.AND(Assignment3.FORALL(v1, Assignment3.FORALL(v3,Assignment3.FORALL(v2,Assignment3.PRED("p",[v1])))), Assignment3.NOT(Assignment3.FORALL(v, Assignment3.PRED("p",[v]))));;
 let z = Assignment3.V("z");;
@@ -373,9 +467,26 @@ let y = Assignment3.V("y");;
 (* let fml1 = Assignment3.OR (Assignment3.PRED("p", [z]), Assignment3.FORALL(x, Assignment3.AND(Assignment3.PRED("p", [x]), Assignment3.FORALL(x, Assignment3.OR(Assignment3.PRED("p", [y]), Assignment3.PRED("p", [x]))))));; *)
 (* Assignment3.fv fml;; *)
 (* Assignment3.closed fml;; *)
-Assignment3.pcnf fml;;
-Printf.printf "%s\n" (Assignment3.printFOL (Assignment3.scnf fml));;
-Assignment3.dpll (Assignment3.scnf fml) 2;;
+(* Assignment3.wff fml2;; *)
+Printf.printf "%s\n" (Assignment3.printFOL (Assignment3.scnf fml2));;
+(* Assignment3.dpll (Assignment3.scnf fml2) 2;; *)
+Assignment3.sat fml2 4;;
 
-(*
+
 *)
+
+
+(* let t1 = Assignment3.C "romeo";; *)
+(* let t2 = Assignment3.C "juliet";; *)
+(* let t7 = Assignment3.C "habibi";; *)
+(* let t5 = Assignment3.V "z";; *)
+(* let t6 = Assignment3.V "y";; *)
+(* let t3 = Assignment3.F("s", [t5;t2]);; *)
+(* let t4 = Assignment3.F("s", [t1;t2;t2]);; *)
+
+(* let fml1 = Assignment3.EXISTS(Assignment3.V "z", Assignment3.FORALL(Assignment3.V "y", Assignment3.EXISTS(Assignment3.V "x", Assignment3.AND(Assignment3.PRED("r", [Assignment3.V("x"); t3;t4]), Assignment3.AND(Assignment3.PRED("q", [t1;t2;t7]), Assignment3.PRED("q", [Assignment3.V("x"); Assignment3.V("y")]))) ) ) );; *)
+
+(* let fml2 = Assignment3.EXISTS(Assignment3.V "a", Assignment3.FORALL(Assignment3.V "z", Assignment3.EXISTS(Assignment3.V "c", Assignment3.EXISTS(Assignment3.V "d", Assignment3.EXISTS(Assignment3.V "e", Assignment3.EXISTS(Assignment3.V "f", Assignment3.EXISTS(Assignment3.V "g", Assignment3.EXISTS(Assignment3.V "h", Assignment3.EXISTS(Assignment3.V "i", Assignment3.EXISTS(Assignment3.V "j", Assignment3.EXISTS(Assignment3.V "k", Assignment3.EXISTS(Assignment3.V "l", Assignment3.EXISTS(Assignment3.V "m", Assignment3.EXISTS(Assignment3.V "n", Assignment3.FORALL(Assignment3.V "o", Assignment3.FORALL(Assignment3.V "p", Assignment3.FORALL(Assignment3.V "q", Assignment3.FORALL(Assignment3.V "r", Assignment3.FORALL(Assignment3.V "s", Assignment3.FORALL(Assignment3.V "t", Assignment3.FORALL(Assignment3.V "u", Assignment3.FORALL(Assignment3.V "v", Assignment3.FORALL(Assignment3.V "w", Assignment3.FORALL(Assignment3.V "x", Assignment3.FORALL(Assignment3.V "y", Assignment3.EXISTS(Assignment3.V "z", Assignment3.FORALL(Assignment3.V "aa", Assignment3.FORALL(Assignment3.V "ab", Assignment3.PRED("s",[t1;t2;t3])))))))))))))))))))))))))))));; *)
+
+(* Assignment3.sat fml2 10;; *)
+(* Assignment3.scnf fml2;; *)
